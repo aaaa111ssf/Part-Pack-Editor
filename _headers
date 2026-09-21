@@ -1,0 +1,14 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+
+# Pyodide 运行时内容寻址、永不改名 —— 可以放心长缓存，第二次打开几乎瞬开
+/pyodide/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 页面本身必须能立刻更新 —— 单文件页面被缓存住时，用户会一直看到旧版
+# 外形/按钮，误以为"功能坏了"。这里直接 no-store，页脚也印了版本号便于核对。
+/index.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+/
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
