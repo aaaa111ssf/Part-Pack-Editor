@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>SFS Pack 编辑器</title>
+<title>SFS Pack 编辑器 · 单文件版</title>
 <style>
   /* ===================== 主题变量 ===================== */
   :root{
@@ -242,6 +242,21 @@
   .foot a.join:hover{filter:brightness(.88)}
   .foot a.join .arw{opacity:.75;margin-left:2px}
 
+  /* ===================== 版权声明 + 锁定字段 ===================== */
+  .disclaimer{margin:46px 0 0;padding:14px 18px;border:1px solid var(--line);
+    border-left:3px solid var(--fg);border-radius:10px;background:var(--panel);
+    font-size:13px;line-height:1.85;color:var(--muted)}
+  .disclaimer b{color:var(--fg)}
+  .disclaimer code{font-family:var(--mono);font-size:12px;background:var(--bg);
+    border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--fg)}
+  /* 作者字段：只读、不可改（版权考虑，锁定原作者署名） */
+  .fld.locked .ro{min-height:42px;display:flex;align-items:center;padding:9px 12px;
+    border:1px solid var(--line);border-radius:9px;background:var(--bg);
+    font-size:15px;color:var(--fg);word-break:break-all}
+  .fld.locked .lock{font-family:var(--mono);font-size:10.5px;font-weight:600;
+    color:var(--faint);border:1px solid var(--line);border-radius:5px;
+    padding:1px 7px;margin-left:8px;letter-spacing:.03em}
+
   /* ===================== 全平台适配（桌面 / 平板 / 手机 / 横屏 / 触摸）=========
    * 目标：任何宽度都不出现横向滚动、可点区域够大、字号不被 iOS 放大。
    * 断点顺序固定为"从宽到窄"，后面的覆盖前面的。
@@ -341,7 +356,7 @@
 <div class="wrap">
   <div class="kicker">SFS · Part Pack Editor</div>
   <h1>零件包编辑器</h1>
-  <p class="sub">在浏览器里改 SFS <b>.pack</b> 零件：名称、简介、质量、燃料、尺寸、耐热、推力、比冲、扭矩、降落伞、分离/对接、外观、尾焰、粒子……并按需渲染出零件的<b>大致外形</b>全部在你的浏览器内完成</p>
+  <p class="sub">在浏览器里改 SFS <b>.pack</b> 零件：名称、简介、质量、燃料、尺寸、耐热、推力、比冲、扭矩、降落伞、分离/对接、外观、尾焰、粒子……并按需渲染出零件的<b>大致外形</b>。全部在你的浏览器内完成 —— 没有后端、没有上传，连服务器都不需要。</p>
   <hr class="rule">
 
   <div id="step1">
@@ -367,7 +382,7 @@
         <div class="grid">
           <div class="fld"><label class="lbl">显示名称 DisplayName</label><input type="text" id="m_DisplayName"></div>
           <div class="fld"><label class="lbl">版本 Version</label><input type="text" id="m_Version"></div>
-          <div class="fld"><label class="lbl">作者 Author</label><input type="text" id="m_Author"></div>
+          <div class="fld locked"><label class="lbl">作者 Author <span class="lock">已锁定</span></label><div class="ro" id="m_Author"></div></div>
           <div class="fld"><label class="lbl">建造分类 Category</label><input type="text" id="m_Category"></div>
           <div class="fld full"><label class="lbl">描述 Description</label><textarea id="m_Description"></textarea>
             <div class="note">建议用英文/数字，中文在游戏内可能显示为方块（游戏字体限制）</div></div>
@@ -387,6 +402,12 @@
       </span>
     </div>
     <div id="parts"></div>
+  </div>
+
+  <div class="disclaimer">
+    <b>版权声明：</b>本工具仅用于本地编辑、学习用途。导出时，<b>作者署名与显示名称都会被自动标注「-已编辑」</b>
+    （作者字段已锁定，你不能把它改成别人的名字，但工具会把它标记为已编辑版本）。导出内容可能仍包含原作者的版权素材，
+    请勿冒用原作者名义发布或二次散布，使用时请遵守原作者的许可协议与相关法律法规。
   </div>
 
   <footer class="foot">
@@ -525,7 +546,7 @@ async function backendBuild(b64, edits, say){
   const stem = (state.name || "mod").replace(/\.[^.]*$/, "") || "mod";
   say("生成完成", 99);
   return {b64: out.b64, report: out.report || {},
-          filename: stem + "_edited.pack", size: Math.floor(out.b64.length * 3 / 4)};
+          filename: stem + "-已编辑.pack", size: Math.floor(out.b64.length * 3 / 4)};
 }
 /* ==== BACKEND:BUILD:END ==== */
 
@@ -548,9 +569,9 @@ function b64ToBlob(b64){
   for(let i=0;i<len;i++) u[i]=bin.charCodeAt(i);
   return new Blob([u], {type:"application/octet-stream"});
 }
-/* 导出名：原件名 + _edited.pack */
+/* 导出名：原件名 + 「-已编辑」后缀 */
 function outName(){
-  return ((state.name||"").replace(/\.[^.]*$/,"") || "mod") + "_edited.pack";
+  return ((state.name||"").replace(/\.[^.]*$/,"") || "mod") + "-已编辑.pack";
 }
 /* 把内存里的包直接落盘。用于两处：正常生成后下载、以及「没有新改动但想导出当前结果」 */
 function downloadB64(b64, filename){
@@ -729,7 +750,8 @@ function render(){
 
   $("#m_DisplayName").value = m.meta.DisplayName || "";
   $("#m_Version").value     = m.meta.Version || "";
-  $("#m_Author").value      = m.meta.Author || "";
+  /* 锁定的作者字段：展示「原署名 + -已编辑」（导出时工具自动追加，与写回值保持一致） */
+  $("#m_Author").textContent = (()=>{ const a=(m.meta.Author||"").replace(/-已编辑$/,""); return a ? (a+"-已编辑") : "（无）"; })();
   $("#m_Category").value    = m.meta.Category || "";
   $("#m_Description").value = m.meta.Description || "";
 
@@ -933,11 +955,21 @@ const MULT    = ["width_mult","flame_mult"];
 
 function collectEdits(){
   const edits = {meta:{}, parts:{}};
-  [["m_DisplayName","DisplayName"],["m_Version","Version"],["m_Author","Author"],
-   ["m_Category","Category"],["m_Description","Description"]].forEach(([id,k])=>{
+  [["m_Version","Version"],["m_Category","Category"],["m_Description","Description"]].forEach(([id,k])=>{
     const val = $("#"+id).value;
     if(val !== (state.orig.meta[k]||"")) edits.meta[k]=val;
   });
+  /* 显示名称：始终追加「-已编辑」标记（已带后缀时不再叠加），明确这是被改动过的版本，
+     避免冒充原作者作品 —— 版权考虑。作者字段已锁定，不会被改成别人的名字，
+     但仍会自动在署名后标注「-已编辑」。 */
+  const _rawDN = ($("#m_DisplayName").value || state.orig.meta.DisplayName || "").replace(/-已编辑$/, "");
+  const _dn = _rawDN + "-已编辑";
+  if(_dn !== (state.orig.meta.DisplayName||"")) edits.meta.DisplayName = _dn;
+  /* 作者署名：同样自动追加「-已编辑」（已带后缀时不再叠加）。作者字段仍锁定、用户不能
+     把它改成别人的名字，但工具会把当前署名标记为已编辑版本 —— 版权考虑。 */
+  const _rawAU = (state.orig.meta.Author || "").replace(/-已编辑$/, "");
+  const _au = _rawAU ? (_rawAU + "-已编辑") : "";
+  if(_au !== (state.orig.meta.Author||"")) edits.meta.Author = _au;
 
   document.querySelectorAll("#parts .card[data-pid]").forEach(card=>{
     const pid = card.dataset.pid;
